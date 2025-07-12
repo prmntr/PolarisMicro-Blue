@@ -234,6 +234,7 @@ async def help(ctx):
         "**Learning**\n"
         "`!knowmo` - Chat with your AI learning buddy!\n"
         "`!summarize` - Summarize the last 50 messages in the chat\n"
+        "`!search` - Search the web for up to date information\n"
         "`!remind [hour]` - Get a daily reminder to practice at the specified hour\n"
         "`!stop` - Stop all daily reminders\n"
         "`!myreminders` - See your active reminders\n\n"
