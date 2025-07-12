@@ -5,10 +5,16 @@ from dotenv import load_dotenv
 import os
 from google import genai
 from google.genai import types
+import asyncio
+from discord.ext import tasks
+from datetime import datetime, timedelta
 
 # load the discord token from .env
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
+
+user_ping_tasks = {}
+user_language = {}
 
 # initializes intents that the bot has and allows the bot to log to 'discord.log'
 # note the log file is overwritten every time bot is created
@@ -28,8 +34,6 @@ client = genai.Client()
 
 # sets the logging level and adds the handler
 logging.basicConfig(level=logging.INFO, handlers=[handler])
-
-#
 
 
 @bot.event
@@ -58,14 +62,27 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
+# intelligent gemini
 @bot.command()
-async def intelligence(ctx):
-    print("intelligence called")
+async def learn(ctx):
+    print("learn called")
+    messages = [
+        "You are a helpful bot chatting with {msg.author}. The above is what they have said previously. Respond in the language they sent the majority of messages in unless stated otherwise by the user. Create a response for their most recent message."]
+    async for msg in ctx.channel.history(limit=50, oldest_first=False):
+        if msg.author == ctx.author:
+            messages.append("User sent: " + msg.content)
+        elif msg.author == bot.user:
+            messages.append("You sent: " + msg.content)
+        if len(messages) == 20:
+            break
+    messages.reverse()
+    prompt = "\n".join(messages)
+    print(prompt)
 
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=ctx.message.content,
+            contents=prompt,
             config=types.GenerateContentConfig(
                 thinking_config=types.ThinkingConfig(
                     thinking_budget=0)  # Disables thinking
@@ -81,11 +98,107 @@ async def intelligence(ctx):
     await ctx.send(text)
     print("response sent")
 
+# simple sanity check
+
 
 @bot.command()
 async def ping(ctx):
     """Responds with Pong!"""
     await ctx.send('Pong!')
+
+
+@bot.command()
+async def remind(ctx, hour: int):
+    if (hour < 0) or (hour > 23):
+        return await ctx.send("Please add a valid time (between 1 and 24 times). \nExample: !remind 14 \nThis reminds you to practice at 2PM.")
+    user_id = ctx.author.id
+
+    if user_id in user_ping_tasks:
+        user_ping_tasks[user_id].cancel()
+        del user_ping_tasks[user_id]
+
+    # Inner function to wait until the right time
+    async def wait_until_hour_then_loop():
+        await bot.wait_until_ready()
+        now = datetime.now()
+        target = now.replace(hour=hour, minute=0, second=0, microsecond=0)
+        if target <= now:
+            # schedule for next day if time has passed
+            target += timedelta(days=1)
+
+        wait_seconds = (target - now).total_seconds()
+        await asyncio.sleep(wait_seconds)
+
+        # Send first ping
+        await ctx.send(f"<@{user_id}> it's {hour:02d}:00; time to practice!")
+
+        # Now repeat every 24 hours
+        while True:
+            await asyncio.sleep(86400)  # 24 hours
+            await ctx.send(f"<@{user_id}> it's {hour:02d}:00 again; time to practice!")
+
+    # Start background task
+    task = asyncio.create_task(wait_until_hour_then_loop())
+    user_ping_tasks[user_id] = task
+
+    await ctx.send(f"Okay <@{user_id}>, I'll ping you every day at {hour:02d}:00.")
+
+
+# stop all daily pings
+@bot.command()
+async def stop(ctx):
+    user_id = ctx.author.id
+    if user_id in user_ping_tasks:
+        user_ping_tasks[user_id].cancel()
+        del user_ping_tasks[user_id]
+        await ctx.send("Your daily ping has been stopped.")
+    else:
+        await ctx.send("You don't have any active pings.")
+
+
+@bot.command()
+async def myreminders(ctx):
+    user_id = ctx.author.id
+    if user_id in user_ping_tasks:
+        await ctx.send(f"You have a daily reminder set at {user_ping_tasks[user_id].get_coro().cr_frame.f_locals.get('hour', 'unknown')}:00.")
+    else:
+        await ctx.send("You don't have any active reminders.")
+    return ctx.send('')
+
+@bot.command()
+async def help(ctx):
+    await ctx.send('List of commands: \n\n!help: Returns this help menu \n!learn: Chat with your AI learning buddy! \n!ping: Ping the bot. \n!quiz: Quiz yourself on the vocabulary you have learned! \n!remind (hour): Get a reminder to practice every day at this hour. \n!myreminders: See your active reminders.  \n!setlanguage (language): Let the AI know what languages you are focusing on.')
+
+
+
+@bot.command()
+async def setlanguage(ctx):
+    print("language called")
+    prompt = ctx.message.content + \
+        "You are a helpful bot chatting with {msg.author}. The above shows the input recieved from the user. If the user's input is the languages they are learning, return the languages they're learning along with anything else they said about their language. If the input is anything other than this, return the exact string 'Invalid input'"
+    print(prompt)
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(
+                    thinking_budget=0)  # Disables thinking
+            ),
+        )
+        print("response created")
+    except Exception as e:
+        print(f"Error: {e}")
+        await ctx.send("An error occurred.")
+
+    text = response.candidates[0].content.parts[0].text
+    if text != "Invalid input":
+        user_language += text
+        await ctx.send("Thanks! This is what we've saved. \n" + text)
+    else:
+        await ctx.send("This is an invalid response. Try again.")
+    print("response sent")
 
 # simple error handling that will never be triggered
 if token:
