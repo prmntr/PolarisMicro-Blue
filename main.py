@@ -69,15 +69,29 @@ async def on_message(message):
 async def learn(ctx):
     print("learn called")
     async with ctx.typing():
-        messages = ["You are a helpful bot chatting with {msg.author}. The above is what they have said previously. Respond in the language they sent the majority of messages in unless stated otherwise by the user. Create a response for their most recent message. Don't add 'you sent:' to the start of your response, that's just for you to keep track of who's sending what. !learn is how the user communicates with you, if their message doesn't have it, you won't see it. Also, keep it so it can fit in a single discord message, so not too long."]
+        messages = [
+            f"You are a helpful bot chatting with {ctx.author.name}. "
+            "The above is what they have said previously. "
+            "Respond in the language they sent the majority of messages in unless stated otherwise by the user. "
+            "Create a response for their most recent message. "
+            "Don't add 'you sent:' to the start of your response, that's just for you to keep track of who's sending what. "
+            "!learn is how the user communicates with you, if their message doesn't have it, you won't see it. "
+            "Also, keep it so it can fit in a single discord message, so not too long."
+        ]
 
         async for msg in ctx.channel.history(limit=50, oldest_first=False):
+            # Include only !learn messages from the user
             if msg.author == ctx.author and msg.content.startswith("!learn"):
                 messages.append("User sent: " + msg.content)
-            elif msg.author == ctx.me and not msg.content.startswith("List of commands:"):
+
+            # Only include bot responses that replied to the user
+            elif (
+                msg.author == ctx.me and
+                (msg.reference and msg.reference.resolved and msg.reference.resolved.author == ctx.author)
+            ):
                 messages.append("You sent: " + msg.content)
 
-            if len(messages) == 20:
+            if len(messages) >= 20:
                 break
 
         messages.reverse()
@@ -89,19 +103,20 @@ async def learn(ctx):
                 model="gemini-2.5-flash",
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(
-                        thinking_budget=0)  # Disables thinking
+                    thinking_config=types.ThinkingConfig(thinking_budget=0)
                 ),
             )
             print("response created")
         except Exception as e:
             print(f"Error: {e}")
-            await ctx.send("An error occurred.")
+            await ctx.reply("An error occurred.")
+            return
 
         text = response.candidates[0].content.parts[0].text
 
-        await ctx.send(text)
+        await ctx.reply(text)
         print("response sent")
+
 
 # simple sanity check
 @bot.command()
@@ -171,7 +186,7 @@ async def myreminders(ctx):
 
 @bot.command()
 async def help(ctx):
-    await ctx.send('List of commands: \n\n!help: Returns this help menu \n!learn: Chat with your AI learning buddy! \n!ping: Ping the bot. \n!quiz: Quiz yourself on the vocabulary you have learned! \n!remind (hour): Get a reminder to practice every day at this hour. \n!stop : Stops all daily reminders. \n!myreminders: See your active reminders. \n!poll (title, options): Create a poll! \n!summarize: Summarize the last 50 messages in the chat. \n!eightball (question): For indecisive moments.\n!roll: Roll a die.\n!meme: Get a high quality meme from Reddit!')
+    await ctx.send('List of commands: \n\n!help: Returns this help menu \n!learn: Chat with your AI learning buddy! \n!ping: Ping the bot. \n!remind (hour): Get a reminder to practice every day at this hour. \n!stop : Stops all daily reminders. \n!myreminders: See your active reminders. \n!poll (title, options): Create a poll! \n!summarize: Summarize the last 50 messages in the chat. \n!eightball (question): For indecisive moments.\n!roll: Roll a die.\n!meme: Get a high quality meme from Reddit!')
 
 
 @bot.command()
