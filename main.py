@@ -71,7 +71,7 @@ async def on_message(message):
 
 # intelligent gemini
 @bot.command()
-async def learn(ctx):
+async def knowmo(ctx):
     print("learn called")
 
     # so the bot can look like it's typing
@@ -90,7 +90,7 @@ async def learn(ctx):
         # gets context
         async for msg in ctx.channel.history(limit=50, oldest_first=False):
             # include only !learn messages from the user
-            if msg.author == ctx.author and msg.content.startswith("!learn"):
+            if msg.author == ctx.author and msg.content.startswith("!knowmo"):
                 messages.append("User sent: " + msg.content)
 
             # only include bot responses that replied to the user
@@ -232,7 +232,7 @@ async def help(ctx):
     await ctx.send(
         "**🤖 Knowmo Command List**\n\n"
         "**Learning**\n"
-        "`!learn` - Chat with your AI learning buddy!\n"
+        "`!knowmo` - Chat with your AI learning buddy!\n"
         "`!summarize` - Summarize the last 50 messages in the chat\n"
         "`!remind [hour]` - Get a daily reminder to practice at the specified hour\n"
         "`!stop` - Stop all daily reminders\n"
