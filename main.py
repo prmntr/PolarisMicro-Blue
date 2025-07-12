@@ -145,7 +145,7 @@ async def search(ctx, *, query: str):
             # Make the request
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
-                contents=f"You are a bot and the !search command was used. Run a google search and provide a response to the discord user's query: {query}",
+                contents=f"You are a bot and the !search command was used. Run a google search and provide a response to the discord user's query: {query}. Keep this response under 1800 characters.",
                 config=config,
             )
 
