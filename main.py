@@ -105,6 +105,36 @@ async def learn(ctx):
         await ctx.send(text)
         print("response sent")
 
+
+@bot.command()
+async def search(ctx, *, query: str):
+    """Searches Google and provides a response from Gemini."""
+    async with ctx.typing():
+        try:
+            grounding_tool = types.Tool(
+                google_search=types.GoogleSearch()
+            )
+            # Configure generation settings
+            config = types.GenerateContentConfig(
+                tools=[grounding_tool]
+            )
+
+            # Make the request
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=f"You are a bot and the !search command was used. Run a google search and provide a response to the discord user's query: {query}",
+                config=config,
+            )
+
+            # Print the grounded response
+            print(response.text)
+
+            await ctx.send(response.text)
+        except Exception as e:
+            print(f"Error: {e}")
+            await ctx.send("An error occurred while searching.")
+
+
 # simple sanity check
 @bot.command()
 async def ping(ctx):
