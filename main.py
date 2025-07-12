@@ -8,6 +8,7 @@ from google.genai import types
 import asyncio
 from discord.ext import tasks
 from datetime import datetime, timedelta
+import random
 
 # load the discord token from .env
 load_dotenv()
@@ -199,6 +200,51 @@ async def setlanguage(ctx):
     else:
         await ctx.send("This is an invalid response. Try again.")
     print("response sent")
+
+@bot.command()
+async def poll(ctx, question: str, *options):
+    if len(options) < 2:
+        return await ctx.send("You need at least two options.")
+    emojis = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
+    desc = ""
+    for i, option in enumerate(options):
+        desc += f"{emojis[i]} {option}\n"
+    embed = discord.Embed(title=question, description=desc)
+    msg = await ctx.send(embed=embed)
+    for i in range(len(options)):
+        await msg.add_reaction(emojis[i])
+
+@bot.command()
+async def summarize(ctx):
+    messages = []
+    async for msg in ctx.channel.history(limit=50, oldest_first=False):
+        if msg.author != bot.user:
+            messages.append(f"{msg.author.name}: {msg.content}")
+    messages.reverse()
+    prompt = "Summarize this chat:\n" + "\n".join(messages)
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        summary = response.candidates[0].content.parts[0].text
+        await ctx.send("📋 Summary:\n" + summary)
+    except Exception as e:
+        print(f"Error: {e}")
+        await ctx.send("Something went wrong while summarizing.")
+
+@bot.command()
+async def eightball(ctx, *, question: str):
+    responses = ["Yes", "No", "Maybe", "Definitely", "Absolutely not", "Ask again later"]
+    await ctx.send(f"🎱 {random.choice(responses)}")
+
+@bot.command()
+async def roll(ctx, sides: int = 6):
+    result = random.randint(1, sides)
+    await ctx.send(f"🎲 You rolled a {result} (1-{sides})")
+
+
 
 # simple error handling that will never be triggered
 if token:
