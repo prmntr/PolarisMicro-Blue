@@ -12,6 +12,8 @@ import random
 from utils import reddit
 from tictactoe import TicTacToe, get_ai_move
 
+# KNOWMO: Created by Team Blue
+
 # load the discord token from .env
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
