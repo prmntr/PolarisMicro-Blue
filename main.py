@@ -171,7 +171,7 @@ async def myreminders(ctx):
 
 @bot.command()
 async def help(ctx):
-    await ctx.send('List of commands: \n\n!help: Returns this help menu \n!learn: Chat with your AI learning buddy! \n!ping: Ping the bot. \n!quiz: Quiz yourself on the vocabulary you have learned! \n!remind (hour): Get a reminder to practice every day at this hour. \n!stop : Stops all daily reminders. \n!myreminders: See your active reminders.  \n!setlanguage (language): Let the AI know what languages you are focusing on. \n!poll: Create a poll! \n!summarize: Summarize the last 50 messages in the chat. \n!eightball (question): For indecisive moments.\n!roll: Roll a die.\n!meme: Get a high quality meme from Reddit!')
+    await ctx.send('List of commands: \n\n!help: Returns this help menu \n!learn: Chat with your AI learning buddy! \n!ping: Ping the bot. \n!quiz: Quiz yourself on the vocabulary you have learned! \n!remind (hour): Get a reminder to practice every day at this hour. \n!stop : Stops all daily reminders. \n!myreminders: See your active reminders.  \n!setlanguage (language): Let the AI know what languages you are focusing on. \n!poll (title, options): Create a poll! \n!summarize: Summarize the last 50 messages in the chat. \n!eightball (question): For indecisive moments.\n!roll: Roll a die.\n!meme: Get a high quality meme from Reddit!')
 
 
 @bot.command()
@@ -257,10 +257,13 @@ async def roll(ctx, sides: int = 6):
 @bot.command()
 async def meme(ctx):
     try:
+        print("1")
         subreddit = reddit.subreddit("memes+dankmemes+wholesomememes")
+        print("2")
         posts = list(subreddit.hot(limit=50))
+        print("3")
         post = random.choice([p for p in posts if not p.stickied and p.url.endswith(('.jpg', '.png', '.jpeg'))])
-
+        await ctx.send('I have retrieved the meme')
         embed = discord.Embed(title=post.title, url=f"https://reddit.com{post.permalink}", color=discord.Color.random())
         embed.set_image(url=post.url)
         embed.set_footer(text=f"👍 {post.score} | 💬 {post.num_comments} comments | 🧠 r/{post.subreddit}")
