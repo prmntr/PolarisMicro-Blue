@@ -184,6 +184,10 @@ async def remind(ctx, hour: int):
         now = datetime.now()
         target = now.replace(hour=hour, minute=0, second=0, microsecond=0)
 
+        if target <= now:
+            # schedule for next day if time has passed
+            target += timedelta(days=1)
+
         wait_seconds = (target - now).total_seconds()
         await asyncio.sleep(wait_seconds)
 
