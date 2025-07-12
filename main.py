@@ -39,28 +39,29 @@ client = genai.Client()
 # sets the logging level and adds the handler
 logging.basicConfig(level=logging.INFO, handlers=[handler])
 
+# the bot is prepared
+
 
 @bot.event
 async def on_ready():
     logging.info(f'Logged in as {bot.user.name} - {bot.user.id}')
     print(f'Logged in as {bot.user.name} - {bot.user.id}')
 
+
 # logs when a member join
-
-
 @bot.event
 async def on_member_join(member):
     logging.info(f'New member joined: {member.name} - {member.id}')
     await member.send(f"welcome to the server {member.name} {member.id}")
     print(f'New member joined: {member.name} - {member.id}')
 
-# when any message unspecificed happsnt the bot responds hello
+# for demo
 
 
 @bot.event
 async def on_message(message):
     if (message.author.id != bot.user.id) and (message.content == 'hello'):
-        await message.channel.send(f'Hello, {message.author}')
+        await message.channel.send(f'Hey {message.author}! Are you ready to show the judges what we have?')
 
     # allows bot to continue looking for msgs
     await bot.process_commands(message)
@@ -70,7 +71,10 @@ async def on_message(message):
 @bot.command()
 async def learn(ctx):
     print("learn called")
+
+    # so the bot can look like it's typing
     async with ctx.typing():
+        # prompt
         messages = [
             f"You are a helpful bot chatting with {ctx.author.name}. "
             "The above is what they have said previously. "
@@ -81,25 +85,27 @@ async def learn(ctx):
             "Also, keep it so it can fit in a single discord message, so not too long."
         ]
 
+        # gets context
         async for msg in ctx.channel.history(limit=50, oldest_first=False):
-            # Include only !learn messages from the user
+            # include only !learn messages from the user
             if msg.author == ctx.author and msg.content.startswith("!learn"):
                 messages.append("User sent: " + msg.content)
 
-            # Only include bot responses that replied to the user
+            # only include bot responses that replied to the user
             elif (
                 msg.author == ctx.me and
                 (msg.reference and msg.reference.resolved and msg.reference.resolved.author == ctx.author)
             ):
                 messages.append("You sent: " + msg.content)
 
-            if len(messages) >= 20:
-                break
-
+        # reverse it
         messages.reverse()
         prompt = "\n".join(messages)
+
+        # debug
         print(prompt)
 
+        # try catch to input prompt; no thinking
         try:
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
@@ -114,6 +120,7 @@ async def learn(ctx):
             await ctx.reply("An error occurred.")
             return
 
+        # parse the actual response
         text = response.candidates[0].content.parts[0].text
 
         await ctx.reply(text)
@@ -127,40 +134,41 @@ async def ping(ctx):
     await ctx.send('Pong!')
 
 
+# remind the user to practice every day
 @bot.command()
 async def remind(ctx, hour: int):
+    # error checking
     if (hour < 0) or (hour > 23):
         return await ctx.send("Please add a valid time (between 1 and 24 times). \nExample: !remind 14 \nThis reminds you to practice at 2PM.")
     user_id = ctx.author.id
 
+    # if user already did this
     if user_id in user_ping_tasks:
         user_ping_tasks[user_id].cancel()
         del user_ping_tasks[user_id]
 
-    # Inner function to wait until the right time
+    # inner function to wait until the right time
     async def wait_until_hour_then_loop():
         await bot.wait_until_ready()
         now = datetime.now()
         target = now.replace(hour=hour, minute=0, second=0, microsecond=0)
-        if target <= now:
-            # schedule for next day if time has passed
-            target += timedelta(days=1)
 
         wait_seconds = (target - now).total_seconds()
         await asyncio.sleep(wait_seconds)
 
-        # Send first ping
+        # send first ping
         await ctx.send(f"<@{user_id}> it's {hour:02d}:00; time to practice!")
 
-        # Now repeat every 24 hours
+        # now repeat every 24 hours
         while True:
             await asyncio.sleep(86400)  # 24 hours
             await ctx.send(f"<@{user_id}> it's {hour:02d}:00 again; time to practice!")
 
-    # Start background task
+    # start this in the background
     task = asyncio.create_task(wait_until_hour_then_loop())
     user_ping_tasks[user_id] = task
 
+    # tell the user it suceeded
     await ctx.send(f"Okay <@{user_id}>, I'll ping you every day at {hour:02d}:00.")
 
 
@@ -176,6 +184,7 @@ async def stop(ctx):
         await ctx.send("You don't have any active pings.")
 
 
+# check for pings
 @bot.command()
 async def myreminders(ctx):
     user_id = ctx.author.id
@@ -186,11 +195,31 @@ async def myreminders(ctx):
     return ctx.send('')
 
 
+# simple help
 @bot.command()
 async def help(ctx):
-    await ctx.send('List of commands: \n\n!help: Returns this help menu \n!learn: Chat with your AI learning buddy! \n!ping: Ping the bot. \n!remind (hour): Get a reminder to practice every day at this hour. \n!stop : Stops all daily reminders. \n!myreminders: See your active reminders. \n!poll (title, options): Create a poll! \n!summarize: Summarize the last 50 messages in the chat. \n!eightball (question): For indecisive moments.\n!roll: Roll a die.\n!meme: Get a high quality meme from Reddit!')
+    await ctx.send(
+        "**🤖 Knowmo Command List**\n\n"
+        "**🧠 Learning**\n"
+        "`!learn` - Chat with your AI learning buddy!\n"
+        "`!summarize` - Summarize the last 50 messages in the chat.\n"
+        "`!remind [hour]` - Get a daily reminder to practice at the specified hour.\n"
+        "`!stop` - Stop all daily reminders.\n"
+        "`!myreminders` - View your active reminders.\n\n"
+
+        "**🎉 Fun Stuff**\n"
+        "`!eightball [question]` - Get answers to life’s big questions.\n"
+        "`!roll` - Roll a die and test your luck.\n"
+        "`!meme` - Get a high-quality meme from Reddit.\n"
+        "`!poll [title, options]` - Create a poll to engage your server.\n\n"
+
+        "**🔧 Miscellaneous**\n"
+        "`!ping` - Ping the bot\n"
+        "`!help` - Show this command list."
+    )
 
 
+# set the primary language
 @bot.command()
 async def setlanguage(ctx):
     async with ctx.typing():
@@ -222,6 +251,7 @@ async def setlanguage(ctx):
         print("response sent")
 
 
+# fun poll command
 @bot.command()
 async def poll(ctx, question: str, *options):
     if len(options) < 2:
@@ -236,9 +266,10 @@ async def poll(ctx, question: str, *options):
         await msg.add_reaction(emojis[i])
 
 
+# summarize the coversation up to 50 msgs
 @bot.command()
 async def summarize(ctx):
-    async with ctx.typing():  # Shows typing indicator
+    async with ctx.typing(): 
         messages = []
         async for msg in ctx.channel.history(limit=50, oldest_first=False):
             if msg.author != bot.user:
@@ -257,19 +288,42 @@ async def summarize(ctx):
             print(f"Error: {e}")
             await ctx.send("Something went wrong while summarizing.")
 
-
+# simple random 8ball
 @bot.command()
 async def eightball(ctx, *, question: str):
     if not question:
         await ctx.send("Whats the question for today? Eg !eightball what do I do today")
-    responses = ["Yes", "No", "Maybe", "Definitely", "Absolutely not", "Ask again later"]
+    responses = [
+        "It is certain.",
+        "It is decidedly so.",
+        "Without a doubt.",
+        "Yes 100%",
+        "You may rely on it.",
+        "As I see it, yes.",
+        "Most likely.",
+        "Outlook good.",
+        "Yes.",
+        "Signs point to yes.",
+        "Reply hazy, try again.",
+        "Ask again later.",
+        "Better not tell you now.",
+        "Cannot predict now.",
+        "Concentrate and ask again.",
+        "Don't count on it.",
+        "My reply is no.",
+        "My sources say no.",
+        "Outlook not so good.",
+        "Very doubtful."
+    ]
     await ctx.send(f"🎱 {random.choice(responses)}")
 
 
+# another easy roll command
 @bot.command()
 async def roll(ctx, sides: int = 6):
     result = random.randint(1, sides)
     await ctx.send(f"🎲 You rolled a {result} (1-{sides})")
+
 
 @bot.command()
 async def tictactoe(ctx, move: int = None):
@@ -288,7 +342,7 @@ async def tictactoe(ctx, move: int = None):
         return
 
     game = tictactoe_games[channel_id]
-    move -= 1 # Adjust for 0-based index
+    move -= 1  # Adjust for 0-based index
 
     if not (0 <= move <= 8):
         await ctx.send("Invalid move. Please choose a number between 1 and 9.")
@@ -329,6 +383,7 @@ async def tictactoe(ctx, move: int = None):
     await ctx.send(game.get_board_string())
 
 
+# get a fun meme from reddit
 @bot.command()
 async def meme(ctx):
     try:
@@ -337,17 +392,20 @@ async def meme(ctx):
         print("2")
         posts = list(subreddit.hot(limit=50))
         print("3")
-        post = random.choice([p for p in posts if not p.stickied and p.url.endswith(('.jpg', '.png', '.jpeg'))])
+        post = random.choice(
+            [p for p in posts if not p.stickied and p.url.endswith(('.jpg', '.png', '.jpeg'))])
         await ctx.send("Here's that great meme you wanted!")
-        embed = discord.Embed(title=post.title, url=f"https://reddit.com{post.permalink}", color=discord.Color.random())
+        embed = discord.Embed(
+            title=post.title, url=f"https://reddit.com{post.permalink}", color=discord.Color.random())
         embed.set_image(url=post.url)
-        embed.set_footer(text=f"👍 {post.score} | 💬 {post.num_comments} comments | 🧠 r/{post.subreddit}")
+        embed.set_footer(
+            text=f"👍 {post.score} | 💬 {post.num_comments} comments | 🧠 r/{post.subreddit}")
 
         await ctx.send(embed=embed)
     except Exception as e:
         print(f"Error: {e}")
         await ctx.send("😵‍💫 I tried to steal a meme from Reddit but slipped on a banana peel.\n"
-            "Try again in a bit — I promise I'll meme responsibly next time! 🤖📷")
+                       "Try again in a bit - I promise I'll meme responsibly next time! 🤖📷")
 
 # simple error handling that will never be triggered
 if token:
