@@ -67,17 +67,19 @@ async def on_message(message):
 # intelligent gemini
 @bot.command()
 async def learn(ctx):
+    print("learn called")
     async with ctx.typing():
-        print("learn called")
-        messages = [
-            "You are a helpful bot chatting with {msg.author}. The above is what they have said previously. Respond in the language they sent the majority of messages in unless stated otherwise by the user. Create a response for their most recent message. Don't add 'you sent:' to the start of your response, that's just for you to keep track of who's sending what. !learn is how the user communicates with you, if their message doesn't have it, you won't see it."]
+        messages = ["You are a helpful bot chatting with {msg.author}. The above is what they have said previously. Respond in the language they sent the majority of messages in unless stated otherwise by the user. Create a response for their most recent message. Don't add 'you sent:' to the start of your response, that's just for you to keep track of who's sending what. !learn is how the user communicates with you, if their message doesn't have it, you won't see it."]
+
         async for msg in ctx.channel.history(limit=50, oldest_first=False):
-            if msg.author == ctx.author:
+            if msg.author == ctx.author and msg.content.startswith("!learn"):
                 messages.append("User sent: " + msg.content)
-            elif msg.author == bot.user:
+            elif msg.author == ctx.me and not msg.content.startswith("List of commands:"):
                 messages.append("You sent: " + msg.content)
+
             if len(messages) == 20:
                 break
+
         messages.reverse()
         prompt = "\n".join(messages)
         print(prompt)
@@ -102,8 +104,6 @@ async def learn(ctx):
         print("response sent")
 
 # simple sanity check
-
-
 @bot.command()
 async def ping(ctx):
     """Responds with Pong!"""
