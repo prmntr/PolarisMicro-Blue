@@ -274,6 +274,16 @@ async def meme(ctx):
         await ctx.send("😵‍💫 I tried to steal a meme from Reddit but slipped on a banana peel.\n"
             "Try again in a bit — I promise I’ll meme responsibly next time! 🤖📷")
 
+#number guessing game
+@bot.command()
+async def numberguessing(ctx):
+    number = random.randint(1, 100)
+    await ctx.send('I have a number in mind between 1 and 100. Guess it with one try!')
+    msg = int(input())
+    if msg == number:
+        print("Good job, you guessed the correct number!")
+    else:
+        print("Unlucky, better luck next time!")
 
 # simple error handling that will never be triggered
 if token:
