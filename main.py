@@ -171,7 +171,7 @@ async def myreminders(ctx):
 
 @bot.command()
 async def help(ctx):
-    await ctx.send('List of commands: \n\n!help: Returns this help menu \n!learn: Chat with your AI learning buddy! \n!ping: Ping the bot. \n!quiz: Quiz yourself on the vocabulary you have learned! \n!remind (hour): Get a reminder to practice every day at this hour. \n!stop : Stops all daily reminders. \n!myreminders: See your active reminders.  \n!setlanguage (language): Let the AI know what languages you are focusing on. \n!poll (title, options): Create a poll! \n!summarize: Summarize the last 50 messages in the chat. \n!eightball (question): For indecisive moments.\n!roll: Roll a die.\n!meme: Get a high quality meme from Reddit!')
+    await ctx.send('List of commands: \n\n!help: Returns this help menu \n!learn: Chat with your AI learning buddy! \n!ping: Ping the bot. \n!quiz: Quiz yourself on the vocabulary you have learned! \n!remind (hour): Get a reminder to practice every day at this hour. \n!stop : Stops all daily reminders. \n!myreminders: See your active reminders. \n!poll (title, options): Create a poll! \n!summarize: Summarize the last 50 messages in the chat. \n!eightball (question): For indecisive moments.\n!roll: Roll a die.\n!meme: Get a high quality meme from Reddit!')
 
 
 @bot.command()
@@ -273,17 +273,6 @@ async def meme(ctx):
         print(f"Error: {e}")
         await ctx.send("😵‍💫 I tried to steal a meme from Reddit but slipped on a banana peel.\n"
             "Try again in a bit — I promise I’ll meme responsibly next time! 🤖📷")
-
-#number guessing game
-@bot.command()
-async def numberguessing(ctx):
-    number = random.randint(1, 100)
-    await ctx.send('I have a number in mind between 1 and 100. Guess it with one try!')
-    msg = int(input())
-    if msg == number:
-        print("Good job, you guessed the correct number!")
-    else:
-        print("Unlucky, better luck next time!")
 
 # simple error handling that will never be triggered
 if token:
