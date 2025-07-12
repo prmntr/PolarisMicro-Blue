@@ -200,22 +200,22 @@ async def myreminders(ctx):
 async def help(ctx):
     await ctx.send(
         "**🤖 Knowmo Command List**\n\n"
-        "**🧠 Learning**\n"
+        "**Learning**\n"
         "`!learn` - Chat with your AI learning buddy!\n"
-        "`!summarize` - Summarize the last 50 messages in the chat.\n"
-        "`!remind [hour]` - Get a daily reminder to practice at the specified hour.\n"
-        "`!stop` - Stop all daily reminders.\n"
-        "`!myreminders` - View your active reminders.\n\n"
+        "`!summarize` - Summarize the last 50 messages in the chat\n"
+        "`!remind [hour]` - Get a daily reminder to practice at the specified hour\n"
+        "`!stop` - Stop all daily reminders\n"
+        "`!myreminders` - See your active reminders\n\n"
 
-        "**🎉 Fun Stuff**\n"
-        "`!eightball [question]` - Get answers to life’s big questions.\n"
-        "`!roll` - Roll a die and test your luck.\n"
-        "`!meme` - Get a high-quality meme from Reddit.\n"
-        "`!poll [title, options]` - Create a poll to engage your server.\n\n"
+        "**Fun Stuff**\n"
+        "`!eightball [question]` - Roll an 8 ball\n"
+        "`!roll` - Roll a die\n"
+        "`!meme` - Get a high-quality meme from Reddit\n"
+        "`!poll [title, options]` - Create a poll\n\n"
 
-        "**🔧 Miscellaneous**\n"
+        "**Miscellaneous**\n"
         "`!ping` - Ping the bot\n"
-        "`!help` - Show this command list."
+        "`!help` - Show this command list"
     )
 
 
