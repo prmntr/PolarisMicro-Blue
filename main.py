@@ -69,7 +69,7 @@ async def on_message(message):
 async def learn(ctx):
     print("learn called")
     async with ctx.typing():
-        messages = ["You are a helpful bot chatting with {msg.author}. The above is what they have said previously. Respond in the language they sent the majority of messages in unless stated otherwise by the user. Create a response for their most recent message. Don't add 'you sent:' to the start of your response, that's just for you to keep track of who's sending what. !learn is how the user communicates with you, if their message doesn't have it, you won't see it."]
+        messages = ["You are a helpful bot chatting with {msg.author}. The above is what they have said previously. Respond in the language they sent the majority of messages in unless stated otherwise by the user. Create a response for their most recent message. Don't add 'you sent:' to the start of your response, that's just for you to keep track of who's sending what. !learn is how the user communicates with you, if their message doesn't have it, you won't see it. Also, keep it so it can fit in a single discord message, so not too long."]
 
         async for msg in ctx.channel.history(limit=50, oldest_first=False):
             if msg.author == ctx.author and msg.content.startswith("!learn"):
@@ -263,7 +263,7 @@ async def meme(ctx):
         posts = list(subreddit.hot(limit=50))
         print("3")
         post = random.choice([p for p in posts if not p.stickied and p.url.endswith(('.jpg', '.png', '.jpeg'))])
-        await ctx.send('I have retrieved the meme')
+        await ctx.send("Here's that great meme you wanted!")
         embed = discord.Embed(title=post.title, url=f"https://reddit.com{post.permalink}", color=discord.Color.random())
         embed.set_image(url=post.url)
         embed.set_footer(text=f"👍 {post.score} | 💬 {post.num_comments} comments | 🧠 r/{post.subreddit}")
@@ -272,7 +272,7 @@ async def meme(ctx):
     except Exception as e:
         print(f"Error: {e}")
         await ctx.send("😵‍💫 I tried to steal a meme from Reddit but slipped on a banana peel.\n"
-            "Try again in a bit — I promise I’ll meme responsibly next time! 🤖📷")
+            "Try again in a bit — I promise I'll meme responsibly next time! 🤖📷")
 
 # simple error handling that will never be triggered
 if token:
