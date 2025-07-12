@@ -67,38 +67,39 @@ async def on_message(message):
 # intelligent gemini
 @bot.command()
 async def learn(ctx):
-    print("learn called")
-    messages = [
-        "You are a helpful bot chatting with {msg.author}. The above is what they have said previously. Respond in the language they sent the majority of messages in unless stated otherwise by the user. Create a response for their most recent message."]
-    async for msg in ctx.channel.history(limit=50, oldest_first=False):
-        if msg.author == ctx.author:
-            messages.append("User sent: " + msg.content)
-        elif msg.author == bot.user:
-            messages.append("You sent: " + msg.content)
-        if len(messages) == 20:
-            break
-    messages.reverse()
-    prompt = "\n".join(messages)
-    print(prompt)
+    async with ctx.typing():
+        print("learn called")
+        messages = [
+            "You are a helpful bot chatting with {msg.author}. The above is what they have said previously. Respond in the language they sent the majority of messages in unless stated otherwise by the user. Create a response for their most recent message. Don't add 'you sent:' to the start of your response, that's just for you to keep track of who's sending what. !learn is how the user communicates with you, if their message doesn't have it, you won't see it."]
+        async for msg in ctx.channel.history(limit=50, oldest_first=False):
+            if msg.author == ctx.author:
+                messages.append("User sent: " + msg.content)
+            elif msg.author == bot.user:
+                messages.append("You sent: " + msg.content)
+            if len(messages) == 20:
+                break
+        messages.reverse()
+        prompt = "\n".join(messages)
+        print(prompt)
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                thinking_config=types.ThinkingConfig(
-                    thinking_budget=0)  # Disables thinking
-            ),
-        )
-        print("response created")
-    except Exception as e:
-        print(f"Error: {e}")
-        await ctx.send("An error occurred.")
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    thinking_config=types.ThinkingConfig(
+                        thinking_budget=0)  # Disables thinking
+                ),
+            )
+            print("response created")
+        except Exception as e:
+            print(f"Error: {e}")
+            await ctx.send("An error occurred.")
 
-    text = response.candidates[0].content.parts[0].text
+        text = response.candidates[0].content.parts[0].text
 
-    await ctx.send(text)
-    print("response sent")
+        await ctx.send(text)
+        print("response sent")
 
 # simple sanity check
 
@@ -167,40 +168,42 @@ async def myreminders(ctx):
         await ctx.send("You don't have any active reminders.")
     return ctx.send('')
 
+
 @bot.command()
 async def help(ctx):
-    await ctx.send('List of commands: \n\n!help: Returns this help menu \n!learn: Chat with your AI learning buddy! \n!ping: Ping the bot. \n!quiz: Quiz yourself on the vocabulary you have learned! \n!remind (hour): Get a reminder to practice every day at this hour. \n!myreminders: See your active reminders.  \n!setlanguage (language): Let the AI know what languages you are focusing on.')
-
+    await ctx.send('List of commands: \n\n!help: Returns this help menu \n!learn: Chat with your AI learning buddy! \n!ping: Ping the bot. \n!quiz: Quiz yourself on the vocabulary you have learned! \n!remind (hour): Get a reminder to practice every day at this hour. \n!stop : Stops all daily reminders. \n!myreminders: See your active reminders.  \n!setlanguage (language): Let the AI know what languages you are focusing on. \n!poll: Create a poll! \n!summarize: Summarize the last 50 messages in the chat. \n!eightball (question): For indecisive moments.\n!roll: Roll a die.\n!meme: Get a high quality meme from Reddit!')
 
 
 @bot.command()
 async def setlanguage(ctx):
-    print("language called")
-    prompt = ctx.message.content + \
-        "You are a helpful bot chatting with {msg.author}. The above shows the input recieved from the user. If the user's input is the languages they are learning, return the languages they're learning along with anything else they said about their language. If the input is anything other than this, return the exact string 'Invalid input'"
-    print(prompt)
+    async with ctx.typing():
+        print("language called")
+        prompt = ctx.message.content + \
+            "You are a helpful bot chatting with {msg.author}. The above shows the input recieved from the user. If the user's input is the languages they are learning, return the languages they're learning along with anything else they said about their language. If the input is anything other than this, return the exact string 'Invalid input'"
+        print(prompt)
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                thinking_config=types.ThinkingConfig(
-                    thinking_budget=0)  # Disables thinking
-            ),
-        )
-        print("response created")
-    except Exception as e:
-        print(f"Error: {e}")
-        await ctx.send("An error occurred.")
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    thinking_config=types.ThinkingConfig(
+                        thinking_budget=0)  # Disables thinking
+                ),
+            )
+            print("response created")
+        except Exception as e:
+            print(f"Error: {e}")
+            await ctx.send("An error occurred.")
 
-    text = response.candidates[0].content.parts[0].text
-    if text != "Invalid input":
-        user_language += text
-        await ctx.send("Thanks! This is what we've saved. \n" + text)
-    else:
-        await ctx.send("This is an invalid response. Try again.")
-    print("response sent")
+        text = response.candidates[0].content.parts[0].text
+        if text != "Invalid input":
+            user_language += text
+            await ctx.send("Thanks! This is what we've saved. \n" + text)
+        else:
+            await ctx.send("This is an invalid response. Try again.")
+        print("response sent")
+
 
 @bot.command()
 async def poll(ctx, question: str, *options):
@@ -215,47 +218,54 @@ async def poll(ctx, question: str, *options):
     for i in range(len(options)):
         await msg.add_reaction(emojis[i])
 
+
 @bot.command()
 async def summarize(ctx):
-    messages = []
-    async for msg in ctx.channel.history(limit=50, oldest_first=False):
-        if msg.author != bot.user:
-            messages.append(f"{msg.author.name}: {msg.content}")
-    messages.reverse()
-    prompt = "Summarize this chat:\n" + "\n".join(messages)
+    async with ctx.typing():  # Shows typing indicator
+        messages = []
+        async for msg in ctx.channel.history(limit=50, oldest_first=False):
+            if msg.author != bot.user:
+                messages.append(f"{msg.author.name}: {msg.content}")
+        messages.reverse()
+        prompt = "Summarize this chat:\n" + "\n".join(messages)
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        )
-        summary = response.candidates[0].content.parts[0].text
-        await ctx.send("📋 Summary:\n" + summary)
-    except Exception as e:
-        print(f"Error: {e}")
-        await ctx.send("Something went wrong while summarizing.")
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+            )
+            summary = response.candidates[0].content.parts[0].text
+            await ctx.send("📋 Summary:\n" + summary)
+        except Exception as e:
+            print(f"Error: {e}")
+            await ctx.send("Something went wrong while summarizing.")
+
 
 @bot.command()
 async def eightball(ctx, *, question: str):
-    responses = ["Yes", "No", "Maybe", "Definitely", "Absolutely not", "Ask again later"]
+    responses = ["Yes", "No", "Maybe", "Definitely",
+                 "Absolutely not", "Ask again later"]
     await ctx.send(f"🎱 {random.choice(responses)}")
+
 
 @bot.command()
 async def roll(ctx, sides: int = 6):
     result = random.randint(1, sides)
     await ctx.send(f"🎲 You rolled a {result} (1-{sides})")
 
-import random
 
 @bot.command()
 async def meme(ctx):
     subreddit = reddit.subreddit("memes+dankmemes+wholesomememes")
     posts = list(subreddit.hot(limit=50))
-    post = random.choice([p for p in posts if not p.stickied and p.url.endswith(('.jpg', '.png', '.jpeg'))])
+    post = random.choice(
+        [p for p in posts if not p.stickied and p.url.endswith(('.jpg', '.png', '.jpeg'))])
 
-    embed = discord.Embed(title=post.title, url=f"https://reddit.com{post.permalink}", color=discord.Color.random())
+    embed = discord.Embed(
+        title=post.title, url=f"https://reddit.com{post.permalink}", color=discord.Color.random())
     embed.set_image(url=post.url)
-    embed.set_footer(text=f"👍 {post.score} | 💬 {post.num_comments} comments | 🧠 r/{post.subreddit}")
+    embed.set_footer(
+        text=f"👍 {post.score} | 💬 {post.num_comments} comments | 🧠 r/{post.subreddit}")
 
     await ctx.send(embed=embed)
 
