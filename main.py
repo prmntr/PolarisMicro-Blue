@@ -243,8 +243,9 @@ async def summarize(ctx):
 
 @bot.command()
 async def eightball(ctx, *, question: str):
-    responses = ["Yes", "No", "Maybe", "Definitely",
-                 "Absolutely not", "Ask again later"]
+    if not question:
+        await ctx.send("Whats the question for today? Eg !eightball what do I do today")
+    responses = ["Yes", "No", "Maybe", "Definitely", "Absolutely not", "Ask again later"]
     await ctx.send(f"🎱 {random.choice(responses)}")
 
 
@@ -253,21 +254,22 @@ async def roll(ctx, sides: int = 6):
     result = random.randint(1, sides)
     await ctx.send(f"🎲 You rolled a {result} (1-{sides})")
 
-
 @bot.command()
 async def meme(ctx):
-    subreddit = reddit.subreddit("memes+dankmemes+wholesomememes")
-    posts = list(subreddit.hot(limit=50))
-    post = random.choice(
-        [p for p in posts if not p.stickied and p.url.endswith(('.jpg', '.png', '.jpeg'))])
+    try:
+        subreddit = reddit.subreddit("memes+dankmemes+wholesomememes")
+        posts = list(subreddit.hot(limit=50))
+        post = random.choice([p for p in posts if not p.stickied and p.url.endswith(('.jpg', '.png', '.jpeg'))])
 
-    embed = discord.Embed(
-        title=post.title, url=f"https://reddit.com{post.permalink}", color=discord.Color.random())
-    embed.set_image(url=post.url)
-    embed.set_footer(
-        text=f"👍 {post.score} | 💬 {post.num_comments} comments | 🧠 r/{post.subreddit}")
+        embed = discord.Embed(title=post.title, url=f"https://reddit.com{post.permalink}", color=discord.Color.random())
+        embed.set_image(url=post.url)
+        embed.set_footer(text=f"👍 {post.score} | 💬 {post.num_comments} comments | 🧠 r/{post.subreddit}")
 
-    await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
+    except Exception as e:
+        print(f"Error: {e}")
+        await ctx.send("😵‍💫 I tried to steal a meme from Reddit but slipped on a banana peel.\n"
+            "Try again in a bit — I promise I’ll meme responsibly next time! 🤖📷")
 
 
 # simple error handling that will never be triggered
