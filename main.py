@@ -10,6 +10,7 @@ from discord.ext import tasks
 from datetime import datetime, timedelta
 import random
 from utils import reddit
+from tictactoe import TicTacToe, get_ai_move
 
 # load the discord token from .env
 load_dotenv()
@@ -17,6 +18,7 @@ token = os.getenv('DISCORD_TOKEN')
 
 user_ping_tasks = {}
 user_language = {}
+tictactoe_games = {}
 
 # initializes intents that the bot has and allows the bot to log to 'discord.log'
 # note the log file is overwritten every time bot is created
@@ -268,6 +270,64 @@ async def eightball(ctx, *, question: str):
 async def roll(ctx, sides: int = 6):
     result = random.randint(1, sides)
     await ctx.send(f"🎲 You rolled a {result} (1-{sides})")
+
+@bot.command()
+async def tictactoe(ctx, move: int = None):
+    channel_id = ctx.channel.id
+    if move is None:
+        if channel_id in tictactoe_games:
+            await ctx.send("A game is already in progress. Make a move from 1-9.")
+        else:
+            tictactoe_games[channel_id] = TicTacToe()
+            await ctx.send("New Tic-Tac-Toe game started! You are X. Make your move by sending `!tictactoe [1-9]`.")
+            await ctx.send(tictactoe_games[channel_id].get_board_string())
+        return
+
+    if channel_id not in tictactoe_games:
+        await ctx.send("No game in progress. Start a new game with `!tictactoe`.")
+        return
+
+    game = tictactoe_games[channel_id]
+    move -= 1 # Adjust for 0-based index
+
+    if not (0 <= move <= 8):
+        await ctx.send("Invalid move. Please choose a number between 1 and 9.")
+        return
+
+    if not game.make_move(move, 'X'):
+        await ctx.send("This spot is already taken. Try again.")
+        return
+
+    if game.current_winner:
+        await ctx.send(game.get_board_string())
+        await ctx.send("You win!")
+        del tictactoe_games[channel_id]
+        return
+
+    if not game.empty_squares():
+        await ctx.send(game.get_board_string())
+        await ctx.send("It's a tie!")
+        del tictactoe_games[channel_id]
+        return
+
+    # AI's turn
+    ai_move = get_ai_move(game)
+    game.make_move(ai_move, 'O')
+
+    if game.current_winner:
+        await ctx.send(game.get_board_string())
+        await ctx.send("AI wins!")
+        del tictactoe_games[channel_id]
+        return
+
+    if not game.empty_squares():
+        await ctx.send(game.get_board_string())
+        await ctx.send("It's a tie!")
+        del tictactoe_games[channel_id]
+        return
+
+    await ctx.send(game.get_board_string())
+
 
 @bot.command()
 async def meme(ctx):
