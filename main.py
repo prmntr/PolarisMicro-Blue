@@ -9,6 +9,7 @@ import asyncio
 from discord.ext import tasks
 from datetime import datetime, timedelta
 import random
+from utils import reddit
 
 # load the discord token from .env
 load_dotenv()
@@ -244,6 +245,19 @@ async def roll(ctx, sides: int = 6):
     result = random.randint(1, sides)
     await ctx.send(f"🎲 You rolled a {result} (1-{sides})")
 
+import random
+
+@bot.command()
+async def meme(ctx):
+    subreddit = reddit.subreddit("memes+dankmemes+wholesomememes")
+    posts = list(subreddit.hot(limit=50))
+    post = random.choice([p for p in posts if not p.stickied and p.url.endswith(('.jpg', '.png', '.jpeg'))])
+
+    embed = discord.Embed(title=post.title, url=f"https://reddit.com{post.permalink}", color=discord.Color.random())
+    embed.set_image(url=post.url)
+    embed.set_footer(text=f"👍 {post.score} | 💬 {post.num_comments} comments | 🧠 r/{post.subreddit}")
+
+    await ctx.send(embed=embed)
 
 
 # simple error handling that will never be triggered
