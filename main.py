@@ -62,7 +62,7 @@ async def on_member_join(member):
 
 @bot.event
 async def on_message(message):
-    if (message.author.id != bot.user.id) and (message.content == 'hello'):
+    if (message.author.id != bot.user.id) and (message.content == 'hey knowmo'):
         await message.channel.send(f'Hey {message.author}! Are you ready to show the judges what we have?')
 
     # allows bot to continue looking for msgs
